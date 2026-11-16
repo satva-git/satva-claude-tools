@@ -7,10 +7,10 @@ Gives every document, PDF, slide deck, Google Doc and Google Slides file the Sat
 
 ### Install (one time, works in every project)
 ```bash
-claude plugin marketplace add <owner>/<repo>
+claude plugin marketplace add satva-git/satva-claude-tools
 claude plugin install satva-brand-format@satva-tools
 ```
-You can also run the same commands inside Claude Code with `/plugin marketplace add <owner>/<repo>` and `/plugin install satva-brand-format@satva-tools`.
+You can also run the same commands inside Claude Code with `/plugin marketplace add satva-git/satva-claude-tools` and `/plugin install satva-brand-format@satva-tools`.
 
 After that, ask Claude for a BRD, proposal, deck or PDF and it uses the house format automatically.
 
