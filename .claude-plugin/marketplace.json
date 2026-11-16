@@ -1,0 +1,12 @@
+{
+  "name": "satva-tools",
+  "description": "Satva Solutions internal Claude plugins",
+  "owner": { "name": "Satva Solutions" },
+  "plugins": [
+    {
+      "name": "satva-brand-format",
+      "source": "./plugins/satva-brand-format",
+      "description": "Satva house format (theme, header, footer, styles) for every document, PDF, deck, Google Doc and Google Slides"
+    }
+  ]
+}
