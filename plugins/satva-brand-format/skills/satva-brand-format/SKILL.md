@@ -1,6 +1,6 @@
 ---
 name: satva-brand-format
-description: Satva's mandatory house format. Use automatically, without being asked, every time Claude creates or edits any document, report, BRD, FRD, SRS, SOW, proposal, letter, notes, PDF, Word file, slide deck, presentation, PowerPoint, Google Doc, Google Slides or artifact (HTML page, doc, slides, design, dashboard). Load it alongside the docx, pptx, pdf, docs, slides and google-workspace skills or artifact types: it supplies Satva's theme, logos, header, footer and Mulish styles.
+description: Satva's mandatory house format, so Claude's output looks and reads like Satva made it, not AI. Use automatically, without being asked, every time Claude creates or edits any document, report, BRD, FRD, SRS, SOW, proposal, letter, notes, PDF, Word file, slide deck, presentation, PowerPoint, spreadsheet, Excel file, Google Doc, Google Slides or artifact (HTML page, doc, slides, design, dashboard), and for the wording of emails and messages drafted for Satva. Load it alongside the docx, pptx, xlsx, pdf, docs, slides and google-workspace skills or artifact types: it supplies Satva's theme, logos, header, footer, Mulish styles and writing rules.
 ---
 
 # Satva house format — documents, PDFs and slides
@@ -27,6 +27,8 @@ Never rebuild the layout from scratch, and never introduce other colours, fonts,
 | PDF of a deck | `.pptx` then `sb.to_pdf()` | |
 | Editing someone's existing file | open it, restyle to the specs below; keep their content | |
 | Google Doc / Google Slides / "put it in Drive" | `.docx` or `.pptx` first | upload with Google Drive `create_file` and let Google convert it — see **Google Drive, Google Docs and Google Slides** |
+| Spreadsheet / Excel / tracker | `.xlsx` (openpyxl) | build the data, then `sb.style_sheet(ws)` on every sheet |
+| Email / message drafted for Satva | text | no file; apply **Avoid the AI look** to the wording |
 
 Deliver the .docx/.pptx (and the .pdf when asked) with SendUserFile, or upload to Google Drive as described below when a Google Doc, Google Slides or Drive is asked for. When the output is an artifact (page, doc, deck, design or dashboard), follow **Artifacts** below.
 
@@ -66,6 +68,29 @@ The format is fixed. The content and structure are yours to design, so make each
 - Cut anything that doesn't help the reader.
 
 Whatever you decide about content, keep every colour, font, header, footer, cover layout and slide layout exactly as specified below.
+
+## Avoid the AI look
+
+This format exists so that Satva's files don't look AI-generated. Branding alone doesn't do that, because AI output also gives itself away through its wording and layout habits. Apply these rules to every output, including emails and messages drafted for Satva.
+
+**Writing**
+- Write like a Satva consultant writing to a client: plain, specific and direct. Use the real names, systems, numbers, dates and decisions from the material, never generic statements that could fit any company.
+- Don't use these words and phrases: delve, leverage, seamless, robust, cutting-edge, game-changer, unlock, empower, elevate, harness, transformative, holistic, synergy, "in today's fast-paced world", "it's worth noting", "plays a crucial role", "navigate the complexities", "not just X but Y", "whether you're X or Y". Don't chain sentences with "Furthermore" and "Moreover".
+- No em dashes (—) in body text. Use commas, colons, brackets or full stops.
+- No emoji, decorative symbols or exclamation marks. The deck's closing "Thank You !" is the one exception, because it's part of the brand.
+- Bold only labels and the run-in `→` sub-headings, not phrases scattered through sentences.
+- Don't turn everything into bullets. Mix short paragraphs and bullets the way the Satva BRD does, and write bullets as full, plain sentences.
+- Headings name the thing ("Invoice Payment", "Vendor Bill Matching"), not slogans ("Revolutionising Payments").
+- No filler. Leave out intros that restate the title, conclusions that repeat the document, "Key takeaways" boxes, generic benefits lists and placeholder text ("[Insert]", "Lorem ipsum", "TBD" with no owner).
+- Don't make lists of three out of habit. List as many items as there really are.
+- Dates in the Satva style: "4th November 2026" in text and 04/11/2026 in tables. Keep spelling consistent with the source material.
+
+**Layout**
+- Use only Satva colours and fonts. No gradients, glows, drop shadows, glassy cards, emoji icons, clip-art or stock illustrations.
+- Show real material: real screenshots, real figures in tables, real names. Never draw a chart from invented data.
+- Vary the slides the way the Satva deck does: stat cards, tables, screenshots and section dividers, not bullet slide after bullet slide.
+- Keep the document layout simple, like the BRD: text, tables and screenshots. No coloured callout boxes or icon grids in Word documents.
+- HTML pages use `sb.html_page()`: no hero banners, gradients or emoji.
 
 ## Document format (Word / PDF)
 
@@ -459,6 +484,30 @@ def doc_table(doc, rows, widths=None, header_fill=None):
             _cell(t.cell(i, j), v, i == 0, 11, WD_ALIGN_PARAGRAPH.CENTER if i == 0 else None, header_fill if i == 0 else None)
     if widths: _widths(t, widths)
     doc.add_paragraph(); return t
+
+# =============================== SPREADSHEETS ===============================
+def style_sheet(ws, header_row=1, freeze=True):
+    """Satva look for an openpyxl worksheet: blue Mulish header, tinted rows, thin borders, sized columns."""
+    from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+    from openpyxl.utils import get_column_letter
+    thin = Side(style="thin", color="DFE9F1"); border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    for r, row in enumerate(ws.iter_rows(min_row=header_row, max_row=ws.max_row), start=header_row):
+        for c in row:
+            c.border = border
+            if r == header_row:
+                c.font = Font(name=F_DOC, size=11, bold=True, color=WHITE)
+                c.fill = PatternFill("solid", fgColor=BLUE)
+                c.alignment = Alignment(vertical="center", wrap_text=True)
+            else:
+                c.font = Font(name=F_DOC, size=10, bold=(c.column == 1), color=BLUE_DARK if c.column == 1 else INK)
+                if (r - header_row) % 2 == 0: c.fill = PatternFill("solid", fgColor=CARD)
+                c.alignment = Alignment(vertical="top", wrap_text=True)
+    for col in range(1, ws.max_column + 1):
+        width = max((len(str(ws.cell(row=r, column=col).value or "")) for r in range(header_row, ws.max_row + 1)), default=8)
+        ws.column_dimensions[get_column_letter(col)].width = min(max(10, width + 2), 50)
+    ws.row_dimensions[header_row].height = 22
+    if freeze: ws.freeze_panes = ws.cell(row=header_row + 1, column=1)
+    ws.sheet_view.showGridLines = False
 
 # =============================== PDF ===============================
 def to_pdf(path, outdir=None):

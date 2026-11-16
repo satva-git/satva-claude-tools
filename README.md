@@ -3,7 +3,7 @@
 Claude plugin marketplace for Satva Solutions.
 
 ## satva-brand-format
-Gives every document, PDF, slide deck, Google Doc, Google Slides file and artifact (HTML page) the Satva house format: theme, header, footer and styles.
+Gives every document, PDF, slide deck, spreadsheet, Google Doc, Google Slides file and artifact (HTML page) the Satva house format (theme, header, footer and styles) and Satva writing rules, so the output reads as Satva-made, not AI-generated.
 
 ### Install (one time, works in every project)
 ```bash
