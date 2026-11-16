@@ -54,6 +54,19 @@ The format applies to artifacts too.
 - **Artifact types (Docs, Slides, Design, Dashboard, Sheets):** follow the type's own instructions, and everywhere it lets you set the theme, colours, fonts or images, use the Satva values: content in Mulish; slide titles and headings in Lexend SemiBold, `#0094D5` (docs headings Mulish bold `#2D74B5` / `#3D85C6`); table headers `#0094D5` with white text and `#EFF7FC` row tint; the Satva logo top-right (`asset("logo_blue")`, or `asset("logo_white")` on blue); the contact line `+1-415-802-0027 | sales@satvasolutions.com` at the end. Docs open with the cover block (title, project info table, Amendment History) and numbered headings as in **Document format**. Decks use blue cover, section and closing slides and white content slides, as in **Slide format**.
 - If a type cannot hold a fixed header or footer, put the header content first and the footer content last, and say so in one line.
 
+## Make the best document for the task
+
+The format is fixed. The content and structure are yours to design, so make each output as good as it can be.
+
+- **Title:** choose the document type and title that fit the task, for example "Business Requirement Document", "Project Proposal", "Meeting Summary", "Status Report", "Technical Specification" or "Implementation Plan". For decks, write a clear title and subtitle. Don't ask the person for a title; choose one, and they can change it.
+- **Structure:** choose section names, order and depth to suit the content. The BRD order below is a default, not a requirement. A good default is: purpose or summary first, then the details, then decisions, next steps, owners and dates.
+- **Cover:** fill in everything: project name, client ("For:"), prepared by (the person, if known), today's date, and version 1.0 with a one-line description.
+- **Writing:** short paragraphs and one idea per bullet. Give concrete numbers, dates and owners. Use tables for comparisons, statuses and timelines, and screenshots or diagrams where they help. Keep terms consistent and check spelling.
+- **Decks:** one message per slide, and a title that states the point. Use stat cards for key numbers and tables for comparisons, with no more than about 6 bullets on a slide.
+- Cut anything that doesn't help the reader.
+
+Whatever you decide about content, keep every colour, font, header, footer, cover layout and slide layout exactly as specified below.
+
 ## Document format (Word / PDF)
 
 **Page:** A4 portrait. Margins: left/right 1", top 0.6", bottom 0.66"; header/footer distance 0.2".
