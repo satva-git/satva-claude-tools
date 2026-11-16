@@ -66,7 +66,7 @@ The format applies to artifacts too.
 | Heading 2 — numbered `1.  Users, Roles & Permissions`, restarts under each H1, indented 0.5" | Mulish | 14 pt | bold | `#3D85C6` |
 | Run-in sub-heading `→ Invoice Payment:` | Mulish | 12 pt | bold | black |
 | Body / `→ statement` paragraphs | Mulish | 12 pt | regular | black |
-| Bullets `●` (level 2 `○`), indent 0.5" | Mulish | 12 pt | regular | black |
+| Bullets `•` (level 2 `–`), indent 0.5". Never use `●`/`○`: Mulish lacks them and PDFs render them oversized | Mulish | 12 pt | regular | black |
 | Links | — | — | underline | `#1155CC` |
 | Captions | Mulish | 10 pt | italic, centred | `#666666` |
 
@@ -428,7 +428,7 @@ def arrow(doc, txt):
 def bullet(doc, txt, level=0):
     p = doc.add_paragraph(); pf = p.paragraph_format
     pf.left_indent = DIn(0.5 + 0.25 * level); pf.first_line_indent = DIn(-0.25); pf.space_after = DPt(2)
-    r = p.add_run(("●" if level == 0 else "○") + "\t" + txt); _set_font(r, 12)
+    r = p.add_run(("\u2022" if level == 0 else "\u2013") + "\t" + txt); _set_font(r, 12)   # Mulish has these; ● would print oversized
     pf.tab_stops.add_tab_stop(DIn(0.5 + 0.25 * level)); return p
 
 def figure(doc, path, width_in=6.0, caption=None):
