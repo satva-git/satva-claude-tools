@@ -1,11 +1,13 @@
 ---
 name: satva-brand-format
-description: Apply the Satva house format (theme, header, footer, styles) to every document, PDF and slide deck Claude creates — BRDs, FRDs, SRS, SOWs, proposals, reports, decks — as .docx, .pptx, .pdf, Google Docs or Google Slides.
+description: Satva's mandatory house format. Use automatically, without being asked, every time Claude creates or edits any document, report, BRD, FRD, SRS, SOW, proposal, letter, notes, PDF, Word file, slide deck, presentation, PowerPoint, Google Doc, Google Slides or artifact (HTML page, doc, slides, design, dashboard). Load it alongside the docx, pptx, pdf, docs, slides and google-workspace skills or artifact types: it supplies Satva's theme, logos, header, footer and Mulish styles.
 ---
 
 # Satva house format — documents, PDFs and slides
 
-Every document, PDF and presentation made for Satva uses this format, whatever its type (BRD, FRD, SRS, SOW, proposal, report, meeting notes, client deck, internal deck). Content changes; the theme, header, footer and styles never do.
+Every document, PDF, presentation, Google Doc, Google Slides and artifact made for Satva uses this format, whatever its type (BRD, FRD, SRS, SOW, proposal, report, meeting notes, client deck, internal deck, web page). Content changes; the theme, header, footer and styles never do.
+
+**Apply it automatically.** The person does not need to name this skill, say "format", or run a command. Whenever any of the outputs above is being made, load this skill first and follow it, together with whichever file skill (docx, pptx, pdf, google-workspace) or artifact type is also used.
 
 Source of truth: the Phase 2 CPGP BRD (documents) and the TEPC Financial Automation proposal deck (slides). This skill reproduces both with a helper module, so nothing has to be copied by hand.
 
@@ -26,7 +28,7 @@ Never rebuild the layout from scratch, and never introduce other colours, fonts,
 | Editing someone's existing file | open it, restyle to the specs below; keep their content | |
 | Google Doc / Google Slides / "put it in Drive" | `.docx` or `.pptx` first | upload with Google Drive `create_file` and let Google convert it — see **Google Drive, Google Docs and Google Slides** |
 
-Deliver the .docx/.pptx (and the .pdf when asked) with SendUserFile, or upload to Google Drive as described below when a Google Doc, Google Slides or Drive is asked for. If the person explicitly asks for a Claude Docs/Slides artifact instead of a file, use the same colours and fonts there and say in one line that the fixed header/footer only exist in the file formats.
+Deliver the .docx/.pptx (and the .pdf when asked) with SendUserFile, or upload to Google Drive as described below when a Google Doc, Google Slides or Drive is asked for. When the output is an artifact (page, doc, deck, design or dashboard), follow **Artifacts** below.
 
 ## Google Drive, Google Docs and Google Slides
 
@@ -43,6 +45,14 @@ This skill overrides the google-workspace skill's native-build approach for any 
 4. Give the person the returned `viewUrl`.
 
 Tested: the conversion keeps Mulish and Lexend fonts, colours, the cover and Amendment History tables, the footer watermark and page numbers, logos, the slide tab and swoosh, card and table styling. For later small text changes to that Google file, the Google Docs/Slides connector is fine; any new content must keep the styles below.
+
+## Artifacts (pages, docs, slides, designs, dashboards)
+
+The format applies to artifacts too.
+
+- **Hand-built HTML pages** (reports, one-pagers, dashboards, explainers, microsites): build the page with `sb.html_page(title, body_html, subtitle)`, write it to a `.html` file and publish that file with the Artifact tool. It gives the Satva header (blue tab, Lexend title, blue logo top-right), Mulish content, branded `<table>`s (blue header row, tinted rows, bold dark-blue first column), KPI cards and the blue footer with the white logo and contact line. KPI cards: `<div class="sv-cards"><div class="sv-card"><div class="num">99%+</div><div class="lbl">Orders matched</div><div class="txt">One-line description</div></div></div>`. Use `<h2>`/`<h3>` for sections. Do not add other colours or fonts.
+- **Artifact types (Docs, Slides, Design, Dashboard, Sheets):** follow the type's own instructions, and everywhere it lets you set the theme, colours, fonts or images, use the Satva values: content in Mulish; slide titles and headings in Lexend SemiBold, `#0094D5` (docs headings Mulish bold `#2D74B5` / `#3D85C6`); table headers `#0094D5` with white text and `#EFF7FC` row tint; the Satva logo top-right (`asset("logo_blue")`, or `asset("logo_white")` on blue); the contact line `+1-415-802-0027 | sales@satvasolutions.com` at the end. Docs open with the cover block (title, project info table, Amendment History) and numbered headings as in **Document format**. Decks use blue cover, section and closing slides and white content slides, as in **Slide format**.
+- If a type cannot hold a fixed header or footer, put the header content first and the footer content last, and say so in one line.
 
 ## Document format (Word / PDF)
 
@@ -444,6 +454,48 @@ def to_pdf(path, outdir=None):
     subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "--outdir", outdir, path],
                    check=True, capture_output=True, timeout=300)
     return os.path.join(outdir, os.path.splitext(os.path.basename(path))[0] + ".pdf")
+
+# =============================== ARTIFACTS / HTML ===============================
+def _b64(name):
+    return base64.b64encode(open(asset(name), "rb").read()).decode()
+
+BRAND_CSS = """
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@600&family=Mulish:ital,wght@0,400;0,700;1,400&display=swap');
+:root{--blue:#0094D5;--blue-dark:#00679A;--card:#EFF7FC;--muted:#5F6B76;--doc-blue:#2D74B5;--doc-blue2:#3D85C6}
+*{box-sizing:border-box}
+body{margin:0;font-family:Mulish,Arial,sans-serif;font-size:16px;line-height:1.55;color:#000;background:#fff;display:flex;flex-direction:column;min-height:100vh}
+.sv-header{display:flex;align-items:center;justify-content:space-between;padding:18px 40px 14px 0;border-bottom:1px solid #e6eef4}
+.sv-header .sv-title{display:flex;align-items:center;gap:28px;font-family:'Lexend',Mulish,sans-serif;font-weight:600;font-size:26px;color:var(--blue)}
+.sv-header .sv-title:before{content:"";width:10px;height:34px;background:var(--blue)}
+.sv-header img{height:34px}
+.sv-sub{color:var(--muted);font-size:14px;margin:4px 0 0 38px}
+main{flex:1;width:100%;max-width:1000px;margin:0 auto;padding:28px 40px 60px}
+h1,h2,h3{font-family:'Lexend',Mulish,sans-serif;font-weight:600;color:var(--blue);line-height:1.25}
+h1{font-size:28px}h2{font-size:22px;margin-top:32px}h3{font-size:17px;color:var(--blue-dark)}
+a{color:#1155CC}
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+th{background:var(--blue);color:#fff;text-align:left;font-weight:700;padding:8px 10px}
+td{padding:8px 10px;border-bottom:1px solid #dfe9f1}
+tr:nth-child(even) td{background:var(--card)}
+td:first-child{font-weight:700;color:var(--blue-dark)}
+.sv-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:20px 0}
+.sv-card{background:var(--card);padding:20px}
+.sv-card .num{font-family:'Lexend',sans-serif;font-weight:600;font-size:30px;color:var(--blue)}
+.sv-card .lbl{font-family:'Lexend',sans-serif;font-weight:600;font-size:13px;color:var(--blue)}
+.sv-card .txt{font-size:13px;color:var(--muted);margin-top:8px}
+.sv-footer{position:relative;background:var(--blue);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:16px 40px;font-size:13px}
+.sv-footer img{height:26px}
+"""
+
+def html_page(title, body_html, subtitle=""):
+    """Branded self-contained HTML page for artifacts: Satva header (tab + title + logo) and footer (contact strip)."""
+    sub = f'<div class="sv-sub">{subtitle}</div>' if subtitle else ""
+    return f"""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{title}</title><style>{BRAND_CSS}</style></head><body>
+<header><div class="sv-header"><div class="sv-title">{title}</div><img alt="Satva Solutions" src="data:image/png;base64,{_b64('logo_blue')}"></div>{sub}</header>
+<main>{body_html}</main>
+<footer class="sv-footer"><img alt="Satva Solutions" src="data:image/png;base64,{_b64('logo_white')}"><span>{PHONE} &nbsp;|&nbsp; {EMAIL}</span></footer>
+</body></html>"""
 
 # ---- embedded brand images (base64 PNG) ----
 ASSETS = {
