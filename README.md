@@ -3,7 +3,7 @@
 Claude plugin marketplace for Satva Solutions.
 
 ## satva-brand-format
-Gives every document, PDF, slide deck, spreadsheet, Google Doc, Google Slides file and artifact (HTML page) the Satva house format (theme, header, footer and styles) and Satva writing rules, so the output reads as Satva-made, not AI-generated.
+Gives every document, PDF, slide deck, spreadsheet, Markdown file, Google Doc, Google Slides/Sheets file and artifact (HTML page) the Satva house format (theme, header, footer and styles) and Satva writing rules, so the output reads as Satva-made, not AI-generated.
 
 ### Install (one time, works in every project)
 ```bash
@@ -45,6 +45,26 @@ claude plugin update satva-brand-format@satva-tools
 ```
 Then restart Claude Code (close the session and run `claude` again). To check which version you have, run `claude plugin list`.
 
+### Cursor
+Cursor uses the same skill. Install it for all your projects with one command:
+
+**macOS / Linux**
+```bash
+curl -fsSL https://raw.githubusercontent.com/satva-git/satva-claude-tools/main/install-cursor.sh | bash
+```
+**Windows (PowerShell)**
+```powershell
+irm https://raw.githubusercontent.com/satva-git/satva-claude-tools/main/install-cursor.ps1 | iex
+```
+This copies the skill to `~/.cursor/skills/satva-brand-format/`. Restart Cursor afterwards. To update, run the same command again.
+
+Cursor picks the skill automatically from its description. To make sure it's always used, add this in **Cursor Settings > Rules > User Rules**:
+> For any document, report, PDF, slide deck, spreadsheet, Markdown document, web page or email you create, use the satva-brand-format skill.
+
+You can also type `/satva-brand-format` in an Agent chat to apply it by hand. The first-time setup steps below (Python libraries, LibreOffice, fonts) apply to Cursor too.
+
+Don't install it in Cursor by copying it into `~/.claude/skills/` if you also use the Claude Code plugin, because Claude Code would then load the skill twice.
+
 ### Claude app (claude.ai / desktop)
 **Install:** go to Customize > Skills, upload `satva-brand-format.zip` and switch it on. Or ask the owner to share the skill with you in the app. The app picks the skill automatically from its description, so no command is needed.
 
@@ -63,4 +83,4 @@ Then restart Claude Code (close the session and run `claude` again). To check wh
 4. Check it: `claude plugin validate .` should end with `Validation passed`.
 5. Commit and push to `main`.
 6. Update the owner's copy in the Claude app (Customize > Skills: replace it with the new zip, or ask Claude to update the skill). Everyone it's shared with gets the change automatically.
-7. Tell the team to run the two update commands under **Get updates**.
+7. Tell the team to run the two update commands under **Get updates**. Cursor users re-run the Cursor install command.

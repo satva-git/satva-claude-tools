@@ -1,6 +1,6 @@
 ---
 name: satva-brand-format
-description: Satva's mandatory house format, so Claude's output looks and reads like Satva made it, not AI. Use automatically, without being asked, every time Claude creates or edits any document, report, BRD, FRD, SRS, SOW, proposal, letter, notes, PDF, Word file, slide deck, presentation, PowerPoint, spreadsheet, Excel file, Google Doc, Google Slides or artifact (HTML page, doc, slides, design, dashboard), and for the wording of emails and messages drafted for Satva. Load it alongside the docx, pptx, xlsx, pdf, docs, slides and google-workspace skills or artifact types: it supplies Satva's theme, logos, header, footer, Mulish styles and writing rules.
+description: Satva's mandatory house format, so Claude's output looks and reads like Satva made it, not AI. Use automatically, without being asked, every time Claude creates or edits any document, report, BRD, FRD, SRS, SOW, proposal, letter, notes, PDF, Word file, slide deck, presentation, PowerPoint, spreadsheet, Excel file, Markdown (.md) document, Google Doc, Google Slides, Google Sheet or artifact (HTML page, doc, slides, design, dashboard), and for the wording of emails and messages drafted for Satva. Load it alongside the docx, pptx, xlsx, pdf, docs, slides and google-workspace skills or artifact types: it supplies Satva's theme, logos, header, footer, Mulish styles and writing rules.
 ---
 
 # Satva house format — documents, PDFs and slides
@@ -15,17 +15,17 @@ Source of truth: the Phase 2 CPGP BRD (documents) and the TEPC Financial Automat
 
 The helper module (`satva_brand.py`) builds every Satva file. Never rebuild the layout from scratch, and never introduce other colours, fonts, logos, page sizes or footers.
 
-- **Claude Code (plugin installed):** the module ships next to this SKILL.md as `satva_brand.py` in this skill's base directory. Import it from there: `import sys; sys.path.insert(0, r"<skill base directory>"); import satva_brand as sb`. Don't copy it into the person's project.
+- **Claude Code or Cursor (skill installed):** the module ships next to this SKILL.md as `satva_brand.py` in this skill's folder (Cursor: `~/.cursor/skills/satva-brand-format/`). Import it from there: `import sys; sys.path.insert(0, r"<skill base directory>"); import satva_brand as sb`. Don't copy it into the person's project.
 - **Claude app, or the file is missing:** write the module at the end of this file (section **Helper module**) verbatim to `satva_brand.py` in the system temp folder (`/tmp` on macOS/Linux, `%TEMP%` on Windows) and import it from there.
 
 **First use on a computer:** run `python satva_brand.py` (use `python3` on macOS/Linux). It lists what's missing. Install what it names with `python -m pip install python-docx python-pptx openpyxl Pillow`. If pip refuses with "externally-managed-environment", add `--user`; if that also fails, use `--break-system-packages`. PDFs also need LibreOffice, or `docx2pdf` with Microsoft Word. If something can't be installed, say exactly what to install and stop. Never fall back to an unformatted file.
 
-## Claude Code: where files go
+## Claude Code and Cursor: where files go
 
 - Save outputs in the current working folder, or the folder the person names, with a clear file name such as `Phase2_CPGP_BRD_v1.0.docx`. Never write helper or scratch files into the project.
-- When finished, give the full path of each file. SendUserFile and the Artifact tool don't exist in Claude Code, so ignore those steps here.
-- A request for "a document", "a BRD", "a proposal" or "a report" means a `.docx` (plus a `.pdf` if asked), not Markdown. Markdown files that belong to a code repo (README, CHANGELOG, `docs/*.md`) stay Markdown but follow **Avoid the AI look**.
-- Google Docs or Google Slides: use the Drive upload route only if a Google Drive tool is connected in Claude Code. Otherwise save the .docx/.pptx and say it can be uploaded to Drive, where Google converts it with the format intact.
+- When finished, give the full path of each file. SendUserFile and the Artifact tool don't exist in Claude Code or Cursor, so ignore those steps there.
+- A request for "a document", "a BRD", "a proposal" or "a report" means a `.docx` (plus a `.pdf` if asked). Make a `.md` only when the person asks for Markdown or names a `.md` file; then follow **Markdown documents**.
+- Google Docs, Slides or Sheets: use the Drive upload route only if a Google Drive tool is connected. Otherwise save the .docx/.pptx and say it can be uploaded to Drive, where Google converts it with the format intact.
 
 ## Which output, which route
 
@@ -38,7 +38,10 @@ The helper module (`satva_brand.py`) builds every Satva file. Never rebuild the 
 | Editing someone's existing file | open it, restyle to the specs below; keep their content | |
 | Google Doc / Google Slides / "put it in Drive" | `.docx` or `.pptx` first | upload with Google Drive `create_file` and let Google convert it — see **Google Drive, Google Docs and Google Slides** |
 | Spreadsheet / Excel / tracker | `.xlsx` (openpyxl) | build the data, then `sb.style_sheet(ws)` on every sheet |
+| Markdown (`.md`) document, or any document asked for "in Markdown" | `.md` | follow **Markdown documents** |
 | Email / message drafted for Satva | text | no file; apply **Avoid the AI look** to the wording |
+| Google Sheets | `.xlsx` first | style with `sb.style_sheet`, then upload with `create_file` (`contentMimeType` `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`) so Google converts it |
+| CSV, JSON or other data files | as asked | no styling possible; keep headers clear and plain |
 
 Deliver the .docx/.pptx (and the .pdf when asked) with SendUserFile in the Claude app or as saved files in Claude Code, or upload to Google Drive as described below when a Google Doc, Google Slides or Drive is asked for. When the output is an artifact (page, doc, deck, design or dashboard), follow **Artifacts** below.
 
@@ -78,6 +81,64 @@ The format is fixed. The content and structure are yours to design, so make each
 - Cut anything that doesn't help the reader.
 
 Whatever you decide about content, keep every colour, font, header, footer, cover layout and slide layout exactly as specified below.
+
+## Markdown documents
+
+Markdown can't carry fonts, colours or page footers, so the Satva format in Markdown is the layout, logo and wording. There are two levels.
+
+**Full format:** for any business document written as Markdown: BRD, FRD, SRS, SOW, proposal, report, meeting notes, plan, specification, or anything the person asks to have "in Markdown". Use this template, filled in:
+
+```markdown
+<p align="right"><img src="https://raw.githubusercontent.com/satva-git/satva-claude-tools/main/brand/satva-technolabs-logo.png" alt="Satva Technolabs" height="40"></p>
+
+# Business Requirement Document
+
+| | |
+|---|---|
+| **Name of the project** | Phase 2 - CPGP Portal |
+| **For** | Communication Professionals |
+| **Prepared by** | Jigna Rathod |
+| **Created on** | 19th November 2026 |
+
+### Amendment History
+
+| Version | Prepared By | Date | Description |
+|---|---|---|---|
+| 1.0 | Jigna Rathod | 19/11/2026 | First issue |
+
+---
+
+## 1. Acknowledgment
+
+Body text in short paragraphs.
+
+## 2. Requirement Discussed
+
+**→ Invoice Payment:**
+
+- One requirement per bullet, written as a full sentence.
+
+## 3. Solution Suggested
+
+### 3.1 Users, Roles & Permissions
+
+→ Statement of what will be built.
+
+| Role | Access |
+|---|---|
+| Administrator | Everything |
+
+---
+
+<sub>Satva Technolabs Pvt. Ltd. · +1-415-802-0027 · sales@satvasolutions.com</sub>
+```
+
+- The logo is the Technolabs one for documents. Use `https://raw.githubusercontent.com/satva-git/satva-claude-tools/main/brand/satva-solutions-logo.png` for decks, proposals and anything client-facing that's about Satva Solutions.
+- Numbered headings: `## 1.`, `## 2.`; sub-sections `### 2.1`; run-in labels `**→ Label:**`; bullets `-`. Tables for anything with columns. Screenshots as `![Caption](path)`.
+- End with the `---` rule and the `<sub>` contact line.
+- If the document will be viewed offline or somewhere that blocks web images, leave the logo line in. It falls back to the "Satva Technolabs" text.
+
+**Light format:** for technical files that belong to a code repo: README, CHANGELOG, CONTRIBUTING, `docs/*.md`, ADRs and code comments. No logo, cover table or contact footer, unless the person asks for them. Use one `#` title, a one-line purpose, clear `##` sections and tables where useful. **Avoid the AI look** applies in full.
 
 ## Avoid the AI look
 
