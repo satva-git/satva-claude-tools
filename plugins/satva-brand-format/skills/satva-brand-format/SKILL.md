@@ -24,6 +24,7 @@ The helper module (`satva_brand.py`) builds every Satva file. Never rebuild the 
 
 - Save outputs in the current working folder, or the folder the person names, with a clear file name such as `Phase2_CPGP_BRD_v1.0.docx`. Never write helper or scratch files into the project.
 - When finished, give the full path of each file. SendUserFile and the Artifact tool don't exist in Claude Code or Cursor, so ignore those steps there.
+- **Artifacts in Claude Code and Cursor:** there's no Artifact tool, but the same outputs still get the Satva format. Build HTML reports, one-pagers, dashboards and explainers with `sb.html_page()` and save them as `.html` files the person can open in a browser. Decks, docs and sheets are saved as `.pptx`, `.docx` and `.xlsx`.
 - A request for "a document", "a BRD", "a proposal" or "a report" means a `.docx` (plus a `.pdf` if asked). Make a `.md` only when the person asks for Markdown or names a `.md` file; then follow **Markdown documents**.
 - Google Docs, Slides or Sheets: use the Drive upload route only if a Google Drive tool is connected. Otherwise save the .docx/.pptx and say it can be uploaded to Drive, where Google converts it with the format intact.
 
@@ -68,6 +69,7 @@ The format applies to artifacts too.
 - **Hand-built HTML pages** (reports, one-pagers, dashboards, explainers, microsites): build the page with `sb.html_page(title, body_html, subtitle)`, write it to a `.html` file and publish that file with the Artifact tool. It gives the Satva header (blue tab, Lexend title, blue logo top-right), Mulish content, branded `<table>`s (blue header row, tinted rows, bold dark-blue first column), KPI cards and the blue footer with the white logo and contact line. KPI cards: `<div class="sv-cards"><div class="sv-card"><div class="num">99%+</div><div class="lbl">Orders matched</div><div class="txt">One-line description</div></div></div>`. Use `<h2>`/`<h3>` for sections. Do not add other colours or fonts.
 - **Artifact types (Docs, Slides, Design, Dashboard, Sheets):** follow the type's own instructions, and everywhere it lets you set the theme, colours, fonts or images, use the Satva values: content in Mulish; slide titles and headings in Lexend SemiBold, `#0094D5` (docs headings Mulish bold `#2D74B5` / `#3D85C6`); table headers `#0094D5` with white text and `#EFF7FC` row tint; the Satva logo top-right (`asset("logo_blue")`, or `asset("logo_white")` on blue); the contact line `+1-415-802-0027 | sales@satvasolutions.com` at the end. Docs open with the cover block (title, project info table, Amendment History) and numbered headings as in **Document format**. Decks use blue cover, section and closing slides and white content slides, as in **Slide format**.
 - If a type cannot hold a fixed header or footer, put the header content first and the footer content last, and say so in one line.
+- **Not for product code.** The Satva look is for documents, reports and pages *about* the work. Never apply it to a client's application, website or UI code that Claude is building for them; those follow the client's own design.
 
 ## Make the best document for the task
 
