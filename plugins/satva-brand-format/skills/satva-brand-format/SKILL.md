@@ -11,11 +11,21 @@ Every document, PDF, presentation, Google Doc, Google Slides and artifact made f
 
 Source of truth: the Phase 2 CPGP BRD (documents) and the TEPC Financial Automation proposal deck (slides). This skill reproduces both with a helper module, so nothing has to be copied by hand.
 
-## Step 0 — always: write the helper module
+## Step 0 — always: get the helper module
 
-Before building anything, write the module at the end of this file (section **Helper module**) to `/tmp/satva_brand.py`, verbatim, with the Write tool. Then `import sys; sys.path.insert(0, "/tmp"); import satva_brand as sb`. It contains the logos as embedded images, so no uploads are needed. Requires `python-docx`, `python-pptx`, `Pillow` (pip install --break-system-packages if missing) and LibreOffice (`soffice`) for PDFs.
+The helper module (`satva_brand.py`) builds every Satva file. Never rebuild the layout from scratch, and never introduce other colours, fonts, logos, page sizes or footers.
 
-Never rebuild the layout from scratch, and never introduce other colours, fonts, logos, page sizes or footers.
+- **Claude Code (plugin installed):** the module ships next to this SKILL.md as `satva_brand.py` in this skill's base directory. Import it from there: `import sys; sys.path.insert(0, r"<skill base directory>"); import satva_brand as sb`. Don't copy it into the person's project.
+- **Claude app, or the file is missing:** write the module at the end of this file (section **Helper module**) verbatim to `satva_brand.py` in the system temp folder (`/tmp` on macOS/Linux, `%TEMP%` on Windows) and import it from there.
+
+**First use on a computer:** run `python satva_brand.py` (use `python3` on macOS/Linux). It lists what's missing. Install what it names with `python -m pip install python-docx python-pptx openpyxl Pillow`. If pip refuses with "externally-managed-environment", add `--user`; if that also fails, use `--break-system-packages`. PDFs also need LibreOffice, or `docx2pdf` with Microsoft Word. If something can't be installed, say exactly what to install and stop. Never fall back to an unformatted file.
+
+## Claude Code: where files go
+
+- Save outputs in the current working folder, or the folder the person names, with a clear file name such as `Phase2_CPGP_BRD_v1.0.docx`. Never write helper or scratch files into the project.
+- When finished, give the full path of each file. SendUserFile and the Artifact tool don't exist in Claude Code, so ignore those steps here.
+- A request for "a document", "a BRD", "a proposal" or "a report" means a `.docx` (plus a `.pdf` if asked), not Markdown. Markdown files that belong to a code repo (README, CHANGELOG, `docs/*.md`) stay Markdown but follow **Avoid the AI look**.
+- Google Docs or Google Slides: use the Drive upload route only if a Google Drive tool is connected in Claude Code. Otherwise save the .docx/.pptx and say it can be uploaded to Drive, where Google converts it with the format intact.
 
 ## Which output, which route
 
@@ -30,7 +40,7 @@ Never rebuild the layout from scratch, and never introduce other colours, fonts,
 | Spreadsheet / Excel / tracker | `.xlsx` (openpyxl) | build the data, then `sb.style_sheet(ws)` on every sheet |
 | Email / message drafted for Satva | text | no file; apply **Avoid the AI look** to the wording |
 
-Deliver the .docx/.pptx (and the .pdf when asked) with SendUserFile, or upload to Google Drive as described below when a Google Doc, Google Slides or Drive is asked for. When the output is an artifact (page, doc, deck, design or dashboard), follow **Artifacts** below.
+Deliver the .docx/.pptx (and the .pdf when asked) with SendUserFile in the Claude app or as saved files in Claude Code, or upload to Google Drive as described below when a Google Doc, Google Slides or Drive is asked for. When the output is an artifact (page, doc, deck, design or dashboard), follow **Artifacts** below.
 
 ## Google Drive, Google Docs and Google Slides
 
@@ -163,18 +173,23 @@ Usage:  import satva_brand as sb
   PDF:    sb.to_pdf(path)  (LibreOffice, keeps header/footer/theme)
 """
 import base64, io, os, subprocess, copy
-from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
-from pptx.dml.color import RGBColor
-from pptx.enum.shapes import MSO_SHAPE
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from pptx.oxml.ns import qn as qn_p
-from docx import Document
-from docx.shared import Pt as DPt, Inches as DIn, RGBColor as DRGB, Emu as DEmu, Twips
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
-from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
+try:
+    from pptx import Presentation
+    from pptx.util import Inches, Pt, Emu
+    from pptx.dml.color import RGBColor
+    from pptx.enum.shapes import MSO_SHAPE
+    from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+    from pptx.oxml.ns import qn as qn_p
+    from docx import Document
+    from docx.shared import Pt as DPt, Inches as DIn, RGBColor as DRGB, Emu as DEmu, Twips
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+except ImportError:          # run `python satva_brand.py` to see what is missing
+    class _Missing:
+        def __getattr__(self, name): return None
+    MSO_SHAPE = PP_ALIGN = MSO_ANCHOR = _Missing()
 
 # ---------------- brand tokens ----------------
 COMPANY_DECK = "Satva Solutions"
@@ -187,7 +202,8 @@ F_HEAD = "Lexend SemiBold"; F_BODY = "Mulish"
 # documents
 DOC_BLUE = "2D74B5"; DOC_BLUE2 = "3D85C6"; LINK = "1155CC"; F_DOC = "Mulish"
 
-_ASSET_DIR = "/tmp/satva_brand_assets"
+import tempfile, shutil, sys
+_ASSET_DIR = os.path.join(tempfile.gettempdir(), "satva_brand_assets")
 def asset(name):
     os.makedirs(_ASSET_DIR, exist_ok=True)
     p = os.path.join(_ASSET_DIR, name + ".png")
@@ -510,12 +526,35 @@ def style_sheet(ws, header_row=1, freeze=True):
     ws.sheet_view.showGridLines = False
 
 # =============================== PDF ===============================
+def _find_soffice():
+    for name in ("soffice", "libreoffice"):
+        p = shutil.which(name)
+        if p: return p
+    for p in ("/Applications/LibreOffice.app/Contents/MacOS/soffice",
+              r"C:\Program Files\LibreOffice\program\soffice.exe",
+              r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"):
+        if os.path.exists(p): return p
+    return None
+
 def to_pdf(path, outdir=None):
-    """Make a PDF from a branded .docx or .pptx so the PDF carries the same theme/header/footer."""
+    """Make a PDF from a branded .docx or .pptx so the PDF carries the same theme/header/footer.
+    Uses LibreOffice if installed; otherwise Microsoft Word/PowerPoint via docx2pdf (docx only)."""
     outdir = outdir or os.path.dirname(os.path.abspath(path))
-    subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "--outdir", outdir, path],
-                   check=True, capture_output=True, timeout=300)
-    return os.path.join(outdir, os.path.splitext(os.path.basename(path))[0] + ".pdf")
+    out = os.path.join(outdir, os.path.splitext(os.path.basename(path))[0] + ".pdf")
+    soffice = _find_soffice()
+    if soffice:
+        subprocess.run([soffice, "--headless", "--convert-to", "pdf", "--outdir", outdir, path],
+                       check=True, capture_output=True, timeout=300)
+        return out
+    if path.lower().endswith(".docx"):
+        try:
+            from docx2pdf import convert            # needs Microsoft Word (Windows / macOS)
+            convert(path, out); return out
+        except ImportError:
+            pass
+    raise RuntimeError("No PDF converter found. Install LibreOffice (free, libreoffice.org), "
+                       "or for Word files run: pip install docx2pdf (uses Microsoft Word). "
+                       "The .docx/.pptx is already saved and can be exported to PDF from Word/PowerPoint.")
 
 # =============================== ARTIFACTS / HTML ===============================
 def _b64(name):
@@ -559,6 +598,18 @@ def html_page(title, body_html, subtitle=""):
 <footer class="sv-footer"><img alt="Satva Solutions" src="data:image/png;base64,{_b64('logo_white')}"><span>{PHONE} &nbsp;|&nbsp; {EMAIL}</span></footer>
 </body></html>"""
 
+# =============================== SETUP CHECK ===============================
+def check():
+    """Print what is installed. Run: python satva_brand.py"""
+    ok = True
+    for mod, pipname in (("docx", "python-docx"), ("pptx", "python-pptx"), ("openpyxl", "openpyxl"), ("PIL", "Pillow")):
+        try: __import__(mod); print(f"OK       {pipname}")
+        except ImportError: ok = False; print(f"MISSING  {pipname}")
+    print(("OK       PDF converter: " + _find_soffice()) if _find_soffice() else
+          "OPTIONAL PDF converter: install LibreOffice (or pip install docx2pdf to use Microsoft Word)")
+    print("Fonts: install Mulish and Lexend (free, fonts.google.com) so files and PDFs show the right fonts.")
+    return ok
+
 # ---- embedded brand images (base64 PNG) ----
 ASSETS = {
     "logo_blue": "iVBORw0KGgoAAAANSUhEUgAAASAAAABJCAMAAACq0QuUAAAAYFBMVEUAlNUAlNUAlNUAlNUAlNUAlNUAlNUAlNUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABuIXF2AAAAIHRSTlMA/q2QblHTLAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABjjZPgAAATESURBVHja7ZzpjuMgDICJD/z+b7yHulMC+AJGO6riX51pSsyHsY1BlNIKQUioOPJ6Tv8mLfL+WFKCX7/DuJajiFwJQY/P67nJV9ei8PtjzfCxfvf6f4AQQ05bB9AbNh8DVOj9mRKA3j0DFZ14jdSstg4gqyvLgMrtj6g0XesHi8Ltpfk4gMB6ch2Q1Dwh1jXBpnE4zMcGJF3HTgFqwWMQUFQRjkE+A+j+KJwDVNIm1MwiMczcbg8PA4LLfPUOoJKMZKSPUz9tIDTgtezLaJCcmwwlNpiYimDV1ZKWQs6C1HTSlACUjGQpT+i3gt/DJwg+2PEEIdHHiCZaVveVfHaCUc6jBh9OTDJUFcBpgs57mmXDKjfGBOcAxVtlfYBa3yTuOJ4E1LxZ2r/kHKBwJNNN7c4YPOIHAXVGbWQhG2oEWwXVMqTzjt6kPRjEevPHxCSLj1O9mWk6gjUrFuy0rN8cxca0K5EMJQw50qpuFqNvAtsNNd2iYxHMd5QbgAKFD73PNOIlm3hmqcGxgZV8zEm5wur5adH91Oy3diTLrsUQPQ9dp/rwOUDFW0PpJgaOluhVJ+ILR52zxLKRDUBOEgq6G5/PBrEjWb4gxPEEDrJpS3ZFM0ayJk55ESym5QkbUp0NB9dkOUAcq+pi2PKcSFZ3CRkKS2ySJfNV44WsWgOFCtRTZ8m4VTITa0BjkSyb0KuRzFh+WtGv+gk6VE9UQLbTDC3A0yserVVU+WBQy/V0kJVXoE0fI346DUjRJRTB0I6MeGI5mkncIFO3WygdNMNiRDAveaonSs9TQK6TiUSyPKDpkNfIPhjtFVKy6Ypkun+Vg2WpsVVRxyoQTDlTnon3I3SqwI9kK4CqUT6gBfOo13792QQU8qgn63aXWtopqQh2MJINr8EYdXfFsQSob9U96eIkY7wfyYZ+1HSJ+DpY+b0bhu5D8ucu6iFAEF2te1WuNUC3VvUKL0TnDl6prRhLofSsvewYsbh30EaeSATjsrxZtJIHcQa4WZVa3lyJbOUmEhy59iJZxxczrZFJcxWQ+NUqzOQ3Ez9NYYFL3fjKbyue2p6DRCkGciZJGyd2cCU3t55fn/p9pUZSUzuwclwGBBsHvvgcILZPaaTT4yGSHTCgYFYlhrIbwYOso2Kcz45RPdeW4iMrWWcg0myFDiuCXSvtrQHCbqryikfFc4AayyTjKNDqHnEWT83U4sO5/FZ+BoGNZlgzSUkCAuCt6pK64thLYMGNYNfmOYxHHnnkkUceeeSRRx555JFHHvlRwu0VEOjc7wBf6/nxnofiXBGB7dOzE8n9fRTzZszbMIzbJviuutZX6i7h4LtOWPwLN/DnASL/l397SuIA4uGWkkDnsVecfxqg4Zeg9t0BRDNAErhA5UaCvgfQfCoEAaGmb28c5AHCoWMfAYiigP69WQUklv/lzwbE8uc75OAUY5bZpPtkQC9vRaoKMvFl+CUwn2+fBOifRYiqAt54jLP04wH9Pg//uvMLA9d7lYjH/pwoxje/6wKi/waIzgOCBKBXQPMAyd+X9TmorCeKXobnp+M7gNzWb+0ihBLFERAHEnleWgtFGlkF1DeOfrscAoTj2sxdCmLx17OrjSwDuvcj1C77gP7g+AU19yYlUnUkKQAAAABJRU5ErkJggg==",
@@ -566,4 +617,7 @@ ASSETS = {
     "doc_logo": "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",
     "doc_watermark": "iVBORw0KGgoAAAANSUhEUgAAAMwAAAA8CAMAAAAdbqXZAAAAYFBMVEX9/f16enqKioqsrKy7u7vLy8ucnJzt7e3c3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB14dkUAAAAIHRSTlMeHh4eHh4eHh4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAABZce4AAAAUJSURBVHja7ZrbdqwgDIY1JIH3f+LN+WQIjLtdqxdDL6qDQD74CQG9rm/644kM3Eoyi1LgE/a/3EeJc1EAt7NrfAzDDelFcNe6DGNTB7g3MBfHK9jAwNC8S2WsUsDC/Q7G3A+DzmFyq3jQy9V6aMXfs8gwVHLxDUwprgnNpkdoFhBtNcZslon0TmgGzQWTmOaaE/1eaJLIdKHxXoiayHSDUNHSVmiyyFSh7Uf7WosMjG6QBrMTmiiy7HVJhfmUpXoyUA1SYTZCkz2Z7tHewZjSklMN0mFUoYkio/I7/yAMtZZYs1eH0YQmi2zAWo6meyMyWiydxzB5gHkpQfPsPHXpfOPNTN8SKULbwVwrodFglR1GY90Dde2Tlxkkd21a0oS2hcmLh1WG/mm+IrRdBABo1ZY0oW1hFt1sBJE1YlqLaR/PTMV4DnHWQtvDiN0sigxnC2SPhvAJjdAvS6EdwAjzWRQZKNqYakRmkNIzfpAqsisXewAjCE0X2UZomhM2c1UsxdG4ENoJzENoO5HthKYkHjt90ScLF3sEMwltKzJhTT1NOJRaqdXJQjuCmSKUvciEaOcVzHJ4ZaGdwQxCcwcia2X4P2Bw0U8roR3C9AAnIuu0QK9h7L02ThTaIUwnNDwS2Vuh9TCgxfuS0E5h6njYQ5G9FJppMIrIFkI7hinbolORvRNaF3hpIlsI7RimjKskMqf38xg8uHWiEulsRSZvg89hunh3EpnZdTR/EDWPU/O221HEVzDtJInWHS9vX+gjmFDhTmSiLj6AaQd4S0sPdpZwxLIXmSS0T2BKC6ciE4W2g2G8jkQmCe0jGPehyKThI1RS3TXn261B6bnx9vS0hLoWLJ4VPbTrm77pm77pm77pm+ZFm2Jql7asx/XKZ9ocC7j+Jqzw5ao7Yc+15QpdFw64R8uuNZHrSObMT1ZTaqZ7PNVis2lXGaOsFBnZEJJRDh85BMWYQztucZFpIaFtMRx0cSc+NrldbixhYhQnvfTlEt91mSzFbobhBuZkkb9glx4F/zIUJRgsMD4y9C/HYYZxbRcA/o38XWthM24bQ7s5F0IGx1yO9hgZpsvkWJqf209zzRaF2ik9OsNAgYn/8ih0RdHvfqnVUskh3NMAQyXXhIwyoOYR+HOLvBuXv3DPPYkEc0cYkGBuWy0wuU+Hov6y3HRdEtvlBwyVfsHQzvUhjH2+jV3BXFacMzfpMF4tZfS7kbGpxkuGIV+8lvopGC57g07dvgSRqTD+j1QY30Bpw88ZA+3QDWfXQ03KEIF+FKY6nBGm+Rdfhf/kS4OxPhOy+qO/Ylt3oTCPjH9lUtrzQ0g/CwPlM50Rxvu4BsO30WCCWkwdDSQo6vFTbZyvMByWWi5N/s6cqTD9nEF/qcFg9N1Y50zncejhmuuHfeZ2XFanX4FxRlpn8CpalGHCYgX5roNx4UOvpzdr/pwq9K/AyK4Zr7JWYXj8nmH646YOJs4zHnwADO/+uHvddL7OqN6sxGZe7WVyPmCwfswHltqi6Y9zUzeQK42EOcN1nQk/uwWMd2fV4GRPjcdiq6X2HsZQsnAI0UZv1p/4kwjjisvrgitTjtXSyGdEmN+HDO5siAeGIzMTf8DpcHGGyXW74TgPy/e82H1464/M8+S04E1wkOw34UeGRO9CfGS7ov46PcipFuPdYPko0nL10jUq7LqU+y9+gz39R78m1t4MiE+VuqN93/R30z/D8CQbCIdUlQAAAABJRU5ErkJggg==",
 }
+
+if __name__ == "__main__":
+    sys.exit(0 if check() else 1)
 ```

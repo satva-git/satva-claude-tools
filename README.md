@@ -16,6 +16,27 @@ After that, the format applies automatically in every project. Ask Claude for a 
 
 To check it's installed, run `claude plugin list`. `satva-brand-format@satva-tools` should show as enabled. Restart any session that was already open when you installed it.
 
+### First-time setup on your computer (Claude Code)
+The plugin builds the files with Python on your own computer, so it needs a few free tools there:
+
+1. **Python 3** (python.org). Check with `python --version` (on macOS: `python3 --version`).
+2. **Python libraries:**
+   ```bash
+   python -m pip install python-docx python-pptx openpyxl Pillow
+   ```
+   If pip says "externally-managed-environment", add `--user` to the end.
+3. **PDF export:** install LibreOffice (libreoffice.org). On Windows or macOS with Microsoft Word you can instead run `python -m pip install docx2pdf`.
+4. **Fonts:** install **Mulish** and **Lexend** from fonts.google.com so the files and PDFs show the right fonts.
+
+To check everything at once, ask Claude Code: "check the Satva format setup". It runs the plugin's checker and installs anything that's missing.
+
+### If the format isn't applied
+1. Run `claude plugin list`. `satva-brand-format@satva-tools` must be listed and enabled, at version 1.4.0 or later. If not, run the update commands below.
+2. Start a **new** Claude Code session after installing or updating. Sessions that were already open don't pick up plugins.
+3. Ask for the output by type, for example "create a BRD for …", "make a deck on …" or "export this as a PDF". The plugin reminds Claude to use the format whenever a request mentions a document, deck, PDF, spreadsheet, page or email.
+4. To force it in any session, type `/satva-brand-format:satva-brand-format` before your request.
+5. If Claude reports a missing library or PDF converter, follow the setup steps above.
+
 ### Get updates (Claude Code)
 When the format changes, everyone runs:
 ```bash
@@ -32,7 +53,7 @@ Then restart Claude Code (close the session and run `claude` again). To check wh
 - **If you uploaded the zip yourself:** download the latest `satva-brand-format.zip` from this repo. In Customize > Skills, delete your old `satva-brand-format`, then upload the new zip and switch it on.
 
 ## Updating the format (maintainers)
-1. Edit `plugins/satva-brand-format/skills/satva-brand-format/SKILL.md`. Colours, fonts and the phone and email are in the `brand tokens` block of the helper module near the end of the file.
+1. Edit `plugins/satva-brand-format/skills/satva-brand-format/SKILL.md`. Colours, fonts and the phone and email are in the `brand tokens` block of the helper module near the end of the file. If you changed the helper module, run `python tools/sync_module.py` so `satva_brand.py` matches.
 2. Increase `version` in `plugins/satva-brand-format/.claude-plugin/plugin.json` (for example `1.1.0` to `1.2.0`). Claude Code only offers the update when this number changes.
 3. Rebuild the app zip from the repo root:
    ```bash
